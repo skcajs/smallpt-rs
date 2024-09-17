@@ -1,3 +1,4 @@
+use super::ray::Ray;
 use super::sphere::{RflType, Sphere};
 use super::tup::Tup;
 
@@ -77,7 +78,9 @@ impl World {
         }
     }
 
-    pub fn intersect() -> bool {}
+    pub fn intersect(ray: &Ray, t: &mut f32, id: &mut isize) -> bool {
+        true
+    }
 
     pub fn radiance() -> Tup {}
 }
