@@ -1,6 +1,5 @@
 use core::f32;
 use std::f32::consts::PI;
-use std::intrinsics::cosf32;
 
 use rand::Rng;
 use rand::SeedableRng;
@@ -111,8 +110,11 @@ impl World {
         let obj: &Sphere = &self.spheres[id];
         let x = ray.o + (ray.d * t);
         let mut n = (x - obj.p).norm();
-        if n.dot(ray.d) >= 0. {
-            n = n * -1.;
+        let n1;
+        if n.dot(ray.d) < 0. {
+            n1 = n;
+        } else {
+            n1 = n * -1.;
         }
         let mut f = obj.c;
         let p = f.0.max(f.1.max(f.2));
@@ -136,8 +138,10 @@ impl World {
                 u = Tup(1., 0., 0.).norm();
             }
             let v = w.cross(u);
-            let d =
+            let d: Tup =
                 (u * f32::cos(r1) * r2s + v * f32::sin(r1) * r2s + w * ((1. - r2).sqrt())).norm();
+            return obj.e + f * self.radiance(&Ray { o: x, d }, depth, seed);
+        } else if obj.rfl == RflType::SPEC {
             return obj.e
                 + f * self.radiance(
                     &Ray {
@@ -147,9 +151,59 @@ impl World {
                     depth,
                     seed,
                 );
-        } else if obj.rfl == RflType::SPEC {
         }
-        Tup(1., 1., 1.)
+        // Refeaction
+        let rfl_ray = Ray {
+            o: x,
+            d: ray.d - n * 2. * n.dot(ray.d),
+        };
+        let into = n.dot(n1) > 0.;
+        let nc: f32 = 1.;
+        let nt: f32 = 1.5;
+        let nnt;
+        if into {
+            nnt = nc / nt;
+        } else {
+            nnt = nt / nc;
+        }
+        let ddn = ray.d.dot(n1);
+        let cos2t = 1. - nnt * nnt * (1. - ddn * ddn);
+        if cos2t < 0. {
+            return obj.e + f * self.radiance(&rfl_ray, depth, seed);
+        }
+        let dir;
+        if into {
+            dir = 1.
+        } else {
+            dir = -1.
+        }
+        let tdir = (ray.d * nnt - n * dir * (ddn * nnt + cos2t.sqrt())).norm();
+        let a = nt - nc;
+        let b = nt + nc;
+        let r0 = a * a / (b * b);
+        let c;
+        if into {
+            c = 1. + ddn;
+        } else {
+            c = 1. - tdir.dot(n);
+        }
+        let re = r0 + (1. - r0) * c * c * c * c * c;
+        let tr = 1. - re;
+        let p = 0.25 + 0.5 * re;
+        let rp = re / p;
+        let tp = tr / (1. - p);
+
+        obj.e
+            + f * (if depth > 2 {
+                if rng.gen_range(0.0..1.0) < p {
+                    self.radiance(&rfl_ray, depth, seed) * rp
+                } else {
+                    self.radiance(&Ray { o: x, d: tdir }, depth, seed) * tp
+                }
+            } else {
+                self.radiance(&rfl_ray, depth, seed) * re
+                    + self.radiance(&Ray { o: x, d: tdir }, depth, seed) * tr
+            })
     }
 }
 
