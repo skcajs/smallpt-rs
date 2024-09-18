@@ -22,15 +22,15 @@ fn main() {
     };
     let cx = Tup(w.to_f32().unwrap() * 0.513 / h.to_f32().unwrap(), 0., 0.);
     let cy = (cx.cross(cam.d)).norm() * 0.5135;
-    let ray: Ray;
-    let mut c: Vec<Tup> = vec![];
+    let mut c: Vec<Tup> = Vec::with_capacity(w * h);
     let world = World::new();
     for y in 0..h {
         for x in 0..w {
-            let seed: [u8; 32] = [1; 32];
+            let mut seed: [u8; 32] = [1; 32];
+            seed[..4].copy_from_slice(&(y * y * y).to_le_bytes());
             let mut rng = ChaCha8Rng::from_seed(seed);
             for sy in 0..2 {
-                let i = (h - y - 1) * w * x;
+                let i = (h - y - 1) * w + x;
                 for sx in 0..2 {
                     let mut rad = Tup(0., 0., 0.);
                     for s in 0..samps {
@@ -63,8 +63,15 @@ fn main() {
                                 },
                                 0,
                                 seed,
-                            );
+                            ) * (1. / samps.to_f32().unwrap());
                     }
+
+                    c[i] = c[i]
+                        + Tup(
+                            rad.0.clamp(0., 1.),
+                            rad.1.clamp(0., 1.),
+                            rad.2.clamp(0., 1.),
+                        ) * 0.25;
                 }
             }
         }
