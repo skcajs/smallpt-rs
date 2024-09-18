@@ -3,45 +3,57 @@ mod sphere;
 mod tup;
 mod world;
 
-use rand::Rng;
-use rand::SeedableRng;
-use rand_chacha::ChaCha8Rng;
+use std::fs::File;
+use std::io::Write;
+
+use rand::{thread_rng, Rng};
 
 use num_traits::ToPrimitive;
 use ray::Ray;
 use tup::Tup;
 use world::World;
 
+fn clamp(x: f32) -> f32 {
+    if x < 0. {
+        return 0.;
+    } else if x > 1. {
+        return 1.;
+    }
+    x
+}
+
+fn to_int(x: f32) -> i32 {
+    (clamp(x).powf(1. / 2.2) * 255. + 0.5).to_i32().unwrap()
+}
+
 fn main() {
-    let w = 1024;
-    let h = 768;
-    let samps = 50;
+    let w = 640;
+    let h = 480;
+    let samps = 20;
     let cam = Ray {
         o: Tup(50., 52., 295.6),
         d: Tup(0., -0.42612, 01.).norm(),
     };
     let cx = Tup(w.to_f32().unwrap() * 0.513 / h.to_f32().unwrap(), 0., 0.);
     let cy = (cx.cross(cam.d)).norm() * 0.5135;
-    let mut c: Vec<Tup> = Vec::with_capacity(w * h);
+    let mut c = vec![Tup(0., 0., 0.); w * h];
     let world = World::new();
     for y in 0..h {
+        let mut rng = thread_rng();
         for x in 0..w {
-            let mut seed: [u8; 32] = [1; 32];
-            seed[..4].copy_from_slice(&(y * y * y).to_le_bytes());
-            let mut rng = ChaCha8Rng::from_seed(seed);
             for sy in 0..2 {
                 let i = (h - y - 1) * w + x;
                 for sx in 0..2 {
                     let mut rad = Tup(0., 0., 0.);
-                    for s in 0..samps {
-                        let r1: f32 = 2. * rng.gen_range(0.0..1.);
+                    for _ in 0..samps {
+                        let r1: f32 = 2. * rng.gen::<f32>();
                         let dx: f32;
                         if r1 < 1. {
                             dx = r1.sqrt() - 1.;
                         } else {
                             dx = 1. - (2. - r1).sqrt();
                         }
-                        let r2: f32 = 2. * rng.gen_range(0.0..1.);
+                        let r2: f32 = 2. * rng.gen::<f32>();
                         let dy: f32;
                         if r2 < 1. {
                             dy = r2.sqrt() - 1.;
@@ -62,18 +74,33 @@ fn main() {
                                     d: d.norm(),
                                 },
                                 0,
-                                seed,
+                                &mut rng,
                             ) * (1. / samps.to_f32().unwrap());
                     }
 
-                    c[i] = c[i]
-                        + Tup(
-                            rad.0.clamp(0., 1.),
-                            rad.1.clamp(0., 1.),
-                            rad.2.clamp(0., 1.),
-                        ) * 0.25;
+                    c[i] = c[i] + Tup(clamp(rad.0), clamp(rad.1), clamp(rad.2)) * 0.25;
                 }
             }
         }
     }
+
+    let mut f = File::create("image.ppm").unwrap();
+    writeln!(f, "P3\n{} {}\n255", w, h).unwrap();
+    for i in 0..w * h {
+        writeln!(
+            f,
+            "{} {} {}",
+            to_int(c[i].0),
+            to_int(c[i].1),
+            to_int(c[i].2)
+        )
+        .unwrap();
+    }
+
+    // let mut ppm = vec![format!("P3\n{} {}\n{}\n", w, h, 255)];
+    // // for i in c {
+    // //     ppm.push(format!("{} {} {}", to_int(i.0), to_int(i.1), to_int(i.2),));
+    // // }
+    // let encoded_ppm = bincode::serialize(&ppm).expect("Could not encode vector");
+    // fs::write("image.txt", encoded_ppm).expect("could not write ppm file");
 }

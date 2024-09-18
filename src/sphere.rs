@@ -18,6 +18,10 @@ pub struct Sphere {
 }
 
 impl Sphere {
+    pub fn new(r: f32, p: Tup, e: Tup, c: Tup, rfl: RflType) -> Self {
+        Sphere { r, p, e, c, rfl }
+    }
+
     pub fn intersect(&self, ray: &Ray) -> f32 {
         let op = self.p - ray.o;
         let b = op.dot(ray.d);

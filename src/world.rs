@@ -1,9 +1,8 @@
 use core::f32;
 use std::f32::consts::PI;
 
+use rand::rngs::ThreadRng;
 use rand::Rng;
-use rand::SeedableRng;
-use rand_chacha::ChaCha8Rng;
 
 use super::ray::Ray;
 use super::sphere::{RflType, Sphere};
@@ -99,9 +98,7 @@ impl World {
         *t < f32::INFINITY
     }
 
-    pub fn radiance(&self, ray: &Ray, mut depth: i32, seed: [u8; 32]) -> Tup {
-        let mut rng = ChaCha8Rng::from_seed(seed);
-
+    pub fn radiance(&self, ray: &Ray, mut depth: i32, mut rng: &mut ThreadRng) -> Tup {
         let mut t = f32::INFINITY;
         let mut id: usize = 0;
         if !self.intersect(&ray, &mut t, &mut id) {
@@ -109,7 +106,7 @@ impl World {
         }
         let obj: &Sphere = &self.spheres[id];
         let x = ray.o + (ray.d * t);
-        let mut n = (x - obj.p).norm();
+        let n = (x - obj.p).norm();
         let n1;
         if n.dot(ray.d) < 0. {
             n1 = n;
@@ -120,15 +117,15 @@ impl World {
         let p = f.0.max(f.1.max(f.2));
         depth += 1;
         if depth > 5 {
-            if rng.gen_range(0.0..1.) < p {
+            if rng.gen::<f32>() < p {
                 f = f * (-1. / p);
             } else {
                 return obj.e;
             }
         }
         if obj.rfl == RflType::DIFF {
-            let r1 = 2. * PI * rng.gen_range(0.0..1.);
-            let r2: f32 = rng.gen_range(0.0..1.);
+            let r1 = 2. * PI * rng.gen::<f32>();
+            let r2: f32 = rng.gen();
             let r2s = r2.sqrt();
             let w = n;
             let u;
@@ -140,7 +137,7 @@ impl World {
             let v = w.cross(u);
             let d: Tup =
                 (u * f32::cos(r1) * r2s + v * f32::sin(r1) * r2s + w * ((1. - r2).sqrt())).norm();
-            return obj.e + f * self.radiance(&Ray { o: x, d }, depth, seed);
+            return obj.e + f * self.radiance(&Ray { o: x, d }, depth, &mut rng);
         } else if obj.rfl == RflType::SPEC {
             return obj.e
                 + f * self.radiance(
@@ -149,7 +146,7 @@ impl World {
                         d: ray.d - n * 2. * n.dot(ray.d),
                     },
                     depth,
-                    seed,
+                    &mut rng,
                 );
         }
         // Refeaction
@@ -169,7 +166,7 @@ impl World {
         let ddn = ray.d.dot(n1);
         let cos2t = 1. - nnt * nnt * (1. - ddn * ddn);
         if cos2t < 0. {
-            return obj.e + f * self.radiance(&rfl_ray, depth, seed);
+            return obj.e + f * self.radiance(&rfl_ray, depth, &mut rng);
         }
         let dir;
         if into {
@@ -196,13 +193,13 @@ impl World {
         obj.e
             + f * (if depth > 2 {
                 if rng.gen_range(0.0..1.0) < p {
-                    self.radiance(&rfl_ray, depth, seed) * rp
+                    self.radiance(&rfl_ray, depth, &mut rng) * rp
                 } else {
-                    self.radiance(&Ray { o: x, d: tdir }, depth, seed) * tp
+                    self.radiance(&Ray { o: x, d: tdir }, depth, &mut rng) * tp
                 }
             } else {
-                self.radiance(&rfl_ray, depth, seed) * re
-                    + self.radiance(&Ray { o: x, d: tdir }, depth, seed) * tr
+                self.radiance(&rfl_ray, depth, &mut rng) * re
+                    + self.radiance(&Ray { o: x, d: tdir }, depth, &mut rng) * tr
             })
     }
 }
