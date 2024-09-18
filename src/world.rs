@@ -1,3 +1,11 @@
+use core::f32;
+use std::f32::consts::PI;
+use std::intrinsics::cosf32;
+
+use rand::Rng;
+use rand::SeedableRng;
+use rand_chacha::ChaCha8Rng;
+
 use super::ray::Ray;
 use super::sphere::{RflType, Sphere};
 use super::tup::Tup;
@@ -92,7 +100,57 @@ impl World {
         *t < f32::INFINITY
     }
 
-    // pub fn radiance() -> Tup {}
+    pub fn radiance(&self, ray: &Ray, mut depth: i32, seed: [u8; 32]) -> Tup {
+        let mut rng = ChaCha8Rng::from_seed(seed);
+
+        let mut t = f32::INFINITY;
+        let mut id: usize = 0;
+        if !self.intersect(&ray, &mut t, &mut id) {
+            return Tup(0., 0., 0.);
+        }
+        let obj: &Sphere = &self.spheres[id];
+        let x = ray.o + (ray.d * t);
+        let mut n = (x - obj.p).norm();
+        if n.dot(ray.d) >= 0. {
+            n = n * -1.;
+        }
+        let mut f = obj.c;
+        let p = f.0.max(f.1.max(f.2));
+        depth += 1;
+        if depth > 5 {
+            if rng.gen_range(0.0..1.) < p {
+                f = f * (-1. / p);
+            } else {
+                return obj.e;
+            }
+        }
+        if obj.rfl == RflType::DIFF {
+            let r1 = 2. * PI * rng.gen_range(0.0..1.);
+            let r2: f32 = rng.gen_range(0.0..1.);
+            let r2s = r2.sqrt();
+            let w = n;
+            let u;
+            if w.0.abs() > 0.1 {
+                u = Tup(0., 1., 0.).norm();
+            } else {
+                u = Tup(1., 0., 0.).norm();
+            }
+            let v = w.cross(u);
+            let d =
+                (u * f32::cos(r1) * r2s + v * f32::sin(r1) * r2s + w * ((1. - r2).sqrt())).norm();
+            return obj.e
+                + f * self.radiance(
+                    &Ray {
+                        o: x,
+                        d: ray.d - n * 2. * n.dot(ray.d),
+                    },
+                    depth,
+                    seed,
+                );
+        } else if obj.rfl == RflType::SPEC {
+        }
+        Tup(1., 1., 1.)
+    }
 }
 
 #[cfg(test)]
