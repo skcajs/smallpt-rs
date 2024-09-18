@@ -78,9 +78,64 @@ impl World {
         }
     }
 
-    pub fn intersect(ray: &Ray, t: &mut f32, id: &mut isize) -> bool {
-        true
+    pub fn intersect(&self, ray: &Ray, t: &mut f32, id: &mut usize) -> bool {
+        let n = self.spheres.len();
+        let mut d: f32;
+        *t = f32::INFINITY;
+        for i in (0..n).rev() {
+            d = self.spheres[i].intersect(ray);
+            if d > 0.0 && d < *t {
+                *t = d;
+                *id = i;
+            }
+        }
+        *t < f32::INFINITY
     }
 
-    pub fn radiance() -> Tup {}
+    // pub fn radiance() -> Tup {}
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new_world() {
+        let sphere = Sphere {
+            r: 1e5,
+            p: Tup(1e5 + 1.0, 40.8, 81.6),
+            e: Tup(0., 0., 0.),
+            c: Tup(0.75, 0.25, 0.25),
+            rfl: RflType::DIFF,
+        };
+        let world = World::new();
+        assert_eq!(world.spheres.len(), 9);
+        assert_eq!(world.spheres[0], sphere)
+    }
+
+    #[test]
+    fn ray_intersects_world() {
+        let world = World::new();
+        let ray = Ray {
+            o: Tup(0.0, 0.0, -5.0),
+            d: Tup(0.0, 0.0, 1.0),
+        };
+        let mut t = f32::INFINITY;
+        let mut id = 0;
+        let its = world.intersect(&ray, &mut t, &mut id);
+        assert!(its);
+    }
+
+    #[test]
+    fn ray_does_not_intersect_world() {
+        let world = World::new();
+        let ray = Ray {
+            o: Tup(0.0, 0.0, -200000.0),
+            d: Tup(0.0, 0.0, 0.0),
+        };
+        let mut t = f32::INFINITY;
+        let mut id = 0;
+        let its = world.intersect(&ray, &mut t, &mut id);
+        assert!(!its);
+    }
 }
