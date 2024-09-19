@@ -27,13 +27,14 @@ fn to_int(x: f32) -> i32 {
 }
 
 fn main() {
-    let w = 640;
-    let h = 480;
-    let samps = 20;
+    let w = 1024;
+    let h = 768;
+    let samps = 100;
     let cam = Ray {
         o: Tup(50., 52., 295.6),
         d: Tup(0., -0.42612, 01.).norm(),
     };
+
     let cx = Tup(w.to_f32().unwrap() * 0.513 / h.to_f32().unwrap(), 0., 0.);
     let cy = (cx.cross(cam.d)).norm() * 0.5135;
     let mut c = vec![Tup(0., 0., 0.); w * h];
@@ -96,11 +97,4 @@ fn main() {
         )
         .unwrap();
     }
-
-    // let mut ppm = vec![format!("P3\n{} {}\n{}\n", w, h, 255)];
-    // // for i in c {
-    // //     ppm.push(format!("{} {} {}", to_int(i.0), to_int(i.1), to_int(i.2),));
-    // // }
-    // let encoded_ppm = bincode::serialize(&ppm).expect("Could not encode vector");
-    // fs::write("image.txt", encoded_ppm).expect("could not write ppm file");
 }
