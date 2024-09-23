@@ -26,9 +26,9 @@ fn to_int(x: f64) -> i32 {
 }
 
 fn main() {
-    let w = 256;
-    let h = 192;
-    let samps: isize = 40;
+    let w = 320;
+    let h = 240;
+    let samps: isize = 20;
     let cam = Ray {
         o: Tup(50., 52., 295.6),
         d: Tup(0., -0.042612, -1.).norm(),
@@ -40,9 +40,9 @@ fn main() {
 
     let world = World::new();
 
-    for y in 0..h {
+    (0..h).into_iter().for_each(|y| {
         let mut rng = thread_rng();
-        for x in 0..w {
+        (0..w).into_iter().for_each(|x| {
             let i = (h - y - 1) * w + x;
             for sy in 0..2 {
                 for sx in 0..2 {
@@ -77,8 +77,8 @@ fn main() {
                     c[i] = c[i] + Tup(clamp(rad.0), clamp(rad.1), clamp(rad.2)) * 0.25;
                 }
             }
-        }
-    }
+        });
+    });
 
     let mut f = File::create("image.ppm").unwrap();
     writeln!(f, "P3\n{} {}\n255", w, h).unwrap();
