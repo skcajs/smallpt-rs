@@ -7,6 +7,7 @@ use std::fs::File;
 use std::io::Write;
 
 use rand::{thread_rng, Rng};
+// use rayon::prelude::*;
 
 use ray::Ray;
 use tup::Tup;
@@ -28,7 +29,7 @@ fn to_int(x: f64) -> i32 {
 fn main() {
     let w = 320;
     let h = 240;
-    let samps: isize = 20;
+    let samps: isize = 50;
     let cam = Ray {
         o: Tup(50., 52., 295.6),
         d: Tup(0., -0.042612, -1.).norm(),
