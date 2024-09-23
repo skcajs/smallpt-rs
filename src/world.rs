@@ -85,12 +85,10 @@ impl World {
     }
 
     pub fn intersect(&self, ray: &Ray, t: &mut f64, id: &mut usize) -> bool {
-        let n = self.spheres.len();
-        let mut d: f64;
         *t = f64::INFINITY;
-        for i in (0..n).rev() {
-            d = self.spheres[i].intersect(ray);
-            if d > 0.0 && d < *t {
+        for i in (0..self.spheres.len()).rev() {
+            let d = self.spheres[i].intersect(ray);
+            if d != 0.0 && d < *t {
                 *t = d;
                 *id = i;
             }
@@ -125,7 +123,7 @@ impl World {
                 let r1 = 2. * PI * rng.gen::<f64>();
                 let r2: f64 = rng.gen();
                 let r2s = r2.sqrt();
-                let w: Tup = n;
+                let w: Tup = n1;
                 let u: Tup = if w.0.abs() > 0.1 {
                     Tup(0., 1., 0.).cross(w).norm()
                 } else {

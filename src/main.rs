@@ -8,7 +8,6 @@ use std::io::Write;
 
 use rand::{thread_rng, Rng};
 
-use num_traits::ToPrimitive;
 use ray::Ray;
 use tup::Tup;
 use world::World;
@@ -27,15 +26,15 @@ fn to_int(x: f64) -> i32 {
 }
 
 fn main() {
-    let w = 128;
-    let h = 96;
-    let samps = 100;
+    let w = 256;
+    let h = 192;
+    let samps: isize = 40;
     let cam = Ray {
         o: Tup(50., 52., 295.6),
-        d: Tup(0., -0.42612, -1.).norm(),
+        d: Tup(0., -0.042612, -1.).norm(),
     };
 
-    let cx = Tup(w as f64 * 0.513 / h as f64, 0.0, 0.0);
+    let cx = Tup(w as f64 * 0.5135 / h as f64, 0.0, 0.0);
     let cy = (cx.cross(cam.d)).norm() * 0.5135;
     let mut c = vec![Tup(0.0, 0.0, 0.0); (w * h) as usize];
 
@@ -44,8 +43,8 @@ fn main() {
     for y in 0..h {
         let mut rng = thread_rng();
         for x in 0..w {
+            let i = (h - y - 1) * w + x;
             for sy in 0..2 {
-                let i = (h - y - 1) * w + x;
                 for sx in 0..2 {
                     let mut rad = Tup(0., 0., 0.);
                     for _ in 0..samps {
@@ -61,23 +60,18 @@ fn main() {
                         } else {
                             1. - (2. - r2).sqrt()
                         };
-                        let d = cx
-                            * (((sx.to_f64().unwrap() + 0.5 + dx) / 2. + x.to_f64().unwrap())
-                                / w.to_f64().unwrap()
-                                - 0.5)
-                            + cy * (((sy.to_f64().unwrap() + 0.5 + dy) / 2. + y.to_f64().unwrap())
-                                / h.to_f64().unwrap()
-                                - 0.5)
+                        let d = cx * (((sx as f64 + 0.5 + dx) / 2. + x as f64) / w as f64 - 0.5)
+                            + cy * (((sy as f64 + 0.5 + dy) / 2. + y as f64) / h as f64 - 0.5)
                             + cam.d;
                         rad = rad
                             + world.radiance(
                                 &Ray {
-                                    o: cam.o + d * 140.to_f64().unwrap(),
+                                    o: cam.o + d * 140.,
                                     d: d.norm(),
                                 },
                                 0,
                                 &mut rng,
-                            ) * (1. / samps.to_f64().unwrap());
+                            ) * (1. / samps as f64);
                     }
 
                     c[i] = c[i] + Tup(clamp(rad.0), clamp(rad.1), clamp(rad.2)) * 0.25;
