@@ -27,9 +27,9 @@ fn to_int(x: f64) -> i32 {
 }
 
 fn main() {
-    let w = 320;
-    let h = 240;
-    let samps: isize = 50;
+    let w = 64;
+    let h = 48;
+    let samps: isize = 10;
     let cam = Ray {
         o: Tup(50., 52., 295.6),
         d: Tup(0., -0.042612, -1.).norm(),
@@ -40,9 +40,9 @@ fn main() {
     let mut c = vec![Tup(0.0, 0.0, 0.0); (w * h) as usize];
 
     let world = World::new();
+    let mut rng = thread_rng();
 
     (0..h).into_iter().for_each(|y| {
-        let mut rng = thread_rng();
         (0..w).into_iter().for_each(|x| {
             let i = (h - y - 1) * w + x;
             for sy in 0..2 {
@@ -55,15 +55,18 @@ fn main() {
                         } else {
                             1. - (2. - r1).sqrt()
                         };
+
                         let r2: f64 = 2. * rng.gen::<f64>();
                         let dy = if r2 < 1. {
                             r2.sqrt() - 1.
                         } else {
                             1. - (2. - r2).sqrt()
                         };
+
                         let d = cx * (((sx as f64 + 0.5 + dx) / 2. + x as f64) / w as f64 - 0.5)
                             + cy * (((sy as f64 + 0.5 + dy) / 2. + y as f64) / h as f64 - 0.5)
                             + cam.d;
+
                         rad = rad
                             + world.radiance(
                                 &Ray {
@@ -73,6 +76,15 @@ fn main() {
                                 0,
                                 &mut rng,
                             ) * (1. / samps as f64);
+
+                        // rad = rad
+                        //     + world.radiance_iter(
+                        //         Ray {
+                        //             o: cam.o + d * 140.,
+                        //             d: d.norm(),
+                        //         },
+                        //         &mut rng,
+                        //     ) * (1. / samps as f64);
                     }
 
                     c[i] = c[i] + Tup(clamp(rad.0), clamp(rad.1), clamp(rad.2)) * 0.25;

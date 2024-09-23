@@ -8,6 +8,10 @@ impl Tup {
         Tup(0., 0., 0.)
     }
 
+    pub fn ones() -> Self {
+        Tup(1., 1., 1.)
+    }
+
     pub fn norm(self) -> Self {
         self * (1.0 / (self.0 * self.0 + self.1 * self.1 + self.2 * self.2).sqrt())
     }
