@@ -20,56 +20,56 @@ impl World {
                 Sphere::new(
                     1e5,
                     Tup(1e5 + 1.0, 40.8, 81.6),
-                    Tup::zero(),
+                    Tup::zeros(),
                     Tup(0.75, 0.25, 0.25),
                     RflType::DIFF,
                 ), // Left
                 Sphere::new(
                     1e5,
                     Tup(-1e5 + 99., 40.8, 81.6),
-                    Tup::zero(),
+                    Tup::zeros(),
                     Tup(0.25, 0.25, 0.75),
                     RflType::DIFF,
                 ), // Right
                 Sphere::new(
                     1e5,
                     Tup(50., 40.8, 1e5),
-                    Tup::zero(),
+                    Tup::zeros(),
                     Tup(0.75, 0.75, 0.75),
                     RflType::DIFF,
                 ), // Back
                 Sphere::new(
                     1e5,
                     Tup(50., 40.8, -1e5 + 170.),
-                    Tup::zero(),
-                    Tup::zero(),
+                    Tup::zeros(),
+                    Tup::zeros(),
                     RflType::DIFF,
                 ), // Front
                 Sphere::new(
                     1e5,
                     Tup(50., 1e5, 81.6),
-                    Tup::zero(),
+                    Tup::zeros(),
                     Tup(0.75, 0.75, 0.75),
                     RflType::DIFF,
                 ), // Bottom
                 Sphere::new(
                     1e5,
                     Tup(50., -1e5 + 81.6, 81.6),
-                    Tup::zero(),
+                    Tup::zeros(),
                     Tup(0.75, 0.75, 0.75),
                     RflType::DIFF,
                 ), // Top
                 Sphere::new(
                     16.5,
                     Tup(27.0, 16.5, 47.0),
-                    Tup::zero(),
+                    Tup::zeros(),
                     Tup(1., 1., 1.) * 0.999,
                     RflType::SPEC,
                 ), // Mirror
                 Sphere::new(
                     16.5,
                     Tup(73., 16.5, 78.),
-                    Tup::zero(),
+                    Tup::zeros(),
                     Tup(1., 1., 1.) * 0.999,
                     RflType::REFR,
                 ), // Glass
@@ -77,7 +77,7 @@ impl World {
                     600.,
                     Tup(50., 681.6 - 0.27, 81.6),
                     Tup(12., 12., 12.),
-                    Tup::zero(),
+                    Tup::zeros(),
                     RflType::DIFF,
                 ), // Light
             ],
@@ -190,7 +190,7 @@ impl World {
     }
 
     pub fn radiance_iter(&self, mut ray: Ray, mut depth: i32, mut rng: &mut ThreadRng) -> Tup {
-        let mut result = Tup::zero();
+        let mut result = Tup::zeros();
         let mut throughput = Tup::ones();
 
         loop {
@@ -213,12 +213,12 @@ impl World {
                 if rng.gen::<f64>() < p {
                     f = f * (1.0 / p);
                 } else {
-                    result = result + throughput * obj.e;
+                    result += throughput * obj.e;
                     break;
                 }
             }
 
-            result = result + throughput * obj.e;
+            result += throughput * obj.e;
             throughput = throughput * f;
 
             match obj.rfl {
@@ -291,19 +291,17 @@ impl World {
                         let reflected_part = throughput * re;
                         let refracted_part = throughput * tr;
 
-                        result = result
-                            + reflected_part
-                                * self.radiance(
-                                    &Ray {
-                                        o: x,
-                                        d: reflected_dir,
-                                    },
-                                    depth,
-                                    &mut rng,
-                                );
-                        result = result
-                            + refracted_part
-                                * self.radiance(&Ray { o: x, d: tdir }, depth, &mut rng);
+                        result += reflected_part
+                            * self.radiance(
+                                &Ray {
+                                    o: x,
+                                    d: reflected_dir,
+                                },
+                                depth,
+                                &mut rng,
+                            );
+                        result +=
+                            refracted_part * self.radiance(&Ray { o: x, d: tdir }, depth, &mut rng);
                         break;
                     }
                 }

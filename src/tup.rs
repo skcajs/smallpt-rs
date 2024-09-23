@@ -4,7 +4,7 @@ use std::ops;
 pub struct Tup(pub f64, pub f64, pub f64);
 
 impl Tup {
-    pub fn zero() -> Self {
+    pub fn zeros() -> Self {
         Tup(0., 0., 0.)
     }
 
@@ -61,11 +61,11 @@ impl ops::Mul<f64> for Tup {
     }
 }
 
-// impl ops::AddAssign<Tup> for Tup {
-//     fn add_assign(&mut self, rhs: Tup) {
-//         *Self = Self(self.0 + rhs.0, self.1 + rhs.1, self.2 + rhs.2);
-//     }
-// }
+impl ops::AddAssign<Tup> for Tup {
+    fn add_assign(&mut self, rhs: Tup) {
+        *self = Self(self.0 + rhs.0, self.1 + rhs.1, self.2 + rhs.2);
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -137,5 +137,15 @@ mod tests {
         assert_eq!(a.0, -1.0);
         assert_eq!(a.1, 2.0);
         assert_eq!(a.2, -1.0);
+    }
+
+    #[test]
+    fn vec_plus_equals() {
+        let mut v1 = Tup(1.0, 2.0, 3.0);
+        let v2 = Tup(2.0, 3.0, 4.0);
+        v1 += v2;
+        assert_eq!(v1.0, 3.0);
+        assert_eq!(v1.1, 5.0);
+        assert_eq!(v1.2, 7.0);
     }
 }

@@ -77,15 +77,14 @@ fn main() {
                         //         &mut rng,
                         //     ) * (1. / samps as f64);
 
-                        rad = rad
-                            + world.radiance_iter(
-                                Ray {
-                                    o: cam.o + d * 140.,
-                                    d: d.norm(),
-                                },
-                                0,
-                                &mut rng,
-                            ) * (1. / samps as f64);
+                        rad += world.radiance_iter(
+                            Ray {
+                                o: cam.o + d * 140.,
+                                d: d.norm(),
+                            },
+                            0,
+                            &mut rng,
+                        ) * (1. / samps as f64);
                     }
 
                     c[i] = c[i] + Tup(clamp(rad.0), clamp(rad.1), clamp(rad.2)) * 0.25;
