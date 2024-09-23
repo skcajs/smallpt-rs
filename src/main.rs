@@ -27,9 +27,9 @@ fn to_int(x: f32) -> i32 {
 }
 
 fn main() {
-    let w = 1024;
-    let h = 768;
-    let samps = 100;
+    let w = 128;
+    let h = 96;
+    let samps = 50;
     let cam = Ray {
         o: Tup(50., 52., 295.6),
         d: Tup(0., -0.42612, 01.).norm(),

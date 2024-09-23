@@ -23,6 +23,7 @@ impl Sphere {
     }
 
     pub fn intersect(&self, ray: &Ray) -> f32 {
+        let eps: f32 = 1e-4;
         let op = self.p - ray.o;
         let b = op.dot(ray.d);
         let det = b * b - op.dot(op) + self.r * self.r;
@@ -33,13 +34,13 @@ impl Sphere {
         let det_sqrt = det.sqrt();
         let mut t = b - det_sqrt;
 
-        if t > f32::EPSILON {
+        if t > eps {
             return t;
         }
 
         t = b + det_sqrt;
 
-        if t > f32::EPSILON {
+        if t > eps {
             return t;
         }
 

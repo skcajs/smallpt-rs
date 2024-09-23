@@ -119,18 +119,14 @@ impl World {
         let obj: &Sphere = &self.spheres[id];
         let x = ray.o + (ray.d * t);
         let n = (x - obj.p).norm();
-        let n1;
-        if n.dot(ray.d) < 0. {
-            n1 = n;
-        } else {
-            n1 = n * -1.;
-        }
+        let n1 = if n.dot(ray.d) < 0.0 { n } else { n * -1.0 };
+
         let mut f = obj.c;
         let p = f.0.max(f.1.max(f.2));
         depth += 1;
         if depth > 5 {
             if rng.gen::<f32>() < p {
-                f = f * (-1. / p);
+                f = f * (1.0 / p);
             } else {
                 return obj.e;
             }
@@ -142,12 +138,12 @@ impl World {
                 let r2: f32 = rng.gen();
                 let r2s = r2.sqrt();
                 let w: Tup = n;
-                let u;
-                if w.0.abs() > 0.1 {
-                    u = Tup(0., 1., 0.).norm();
+                let u: Tup = if w.0.abs() > 0.1 {
+                    Tup(0., 1., 0.).cross(w).norm()
                 } else {
-                    u = Tup(1., 0., 0.).norm();
-                }
+                    Tup(1., 0., 0.).cross(w).norm()
+                };
+
                 let v = w.cross(u);
                 let d: Tup =
                     (u * f32::cos(r1) * r2s + v * f32::sin(r1) * r2s + w * ((1. - r2).sqrt()))
@@ -173,33 +169,19 @@ impl World {
                 let into = n.dot(n1) > 0.;
                 let nc: f32 = 1.;
                 let nt: f32 = 1.5;
-                let nnt;
-                if into {
-                    nnt = nc / nt;
-                } else {
-                    nnt = nt / nc;
-                }
+                let nnt = if into { nc / nt } else { nt / nc };
                 let ddn = ray.d.dot(n1);
                 let cos2t = 1. - nnt * nnt * (1. - ddn * ddn);
                 if cos2t < 0. {
                     return obj.e + f * self.radiance(&rfl_ray, depth, &mut rng);
                 }
-                let dir;
-                if into {
-                    dir = 1.
-                } else {
-                    dir = -1.
-                }
-                let tdir = (ray.d * nnt - n * dir * (ddn * nnt + cos2t.sqrt())).norm();
+                let tdir = (ray.d * nnt
+                    - n * if into { 1. } else { -1. } * (ddn * nnt + cos2t.sqrt()))
+                .norm();
                 let a = nt - nc;
                 let b = nt + nc;
                 let r0 = a * a / (b * b);
-                let c;
-                if into {
-                    c = 1. + ddn;
-                } else {
-                    c = 1. - tdir.dot(n);
-                }
+                let c = 1. - if into { -ddn } else { tdir.dot(n) };
                 let re = r0 + (1. - r0) * c * c * c * c * c;
                 let tr = 1. - re;
                 let p = 0.25 + 0.5 * re;
