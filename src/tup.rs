@@ -1,14 +1,18 @@
 use std::ops;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Tup(pub f32, pub f32, pub f32);
+pub struct Tup(pub f64, pub f64, pub f64);
 
 impl Tup {
+    pub fn zero() -> Self {
+        Tup(0., 0., 0.)
+    }
+
     pub fn norm(self) -> Self {
         self * (1.0 / (self.0 * self.0 + self.1 * self.1 + self.2 * self.2).sqrt())
     }
 
-    pub fn dot(self, rhs: Tup) -> f32 {
+    pub fn dot(self, rhs: Tup) -> f64 {
         self.0 * rhs.0 + self.1 * rhs.1 + self.2 * rhs.2
     }
 
@@ -45,10 +49,10 @@ impl ops::Mul<Tup> for Tup {
     }
 }
 
-impl ops::Mul<f32> for Tup {
+impl ops::Mul<f64> for Tup {
     type Output = Tup;
 
-    fn mul(self, rhs: f32) -> Self::Output {
+    fn mul(self, rhs: f64) -> Self::Output {
         Tup(self.0 * rhs, self.1 * rhs, self.2 * rhs)
     }
 }
@@ -97,9 +101,9 @@ mod tests {
     }
 
     #[test]
-    fn vec_mul_f32() {
+    fn vec_mul_f64() {
         let v1 = Tup(1.0, 2.0, 3.0);
-        let a: f32 = 3.0;
+        let a: f64 = 3.0;
 
         let v3 = v1 * a;
         assert_eq!(v3.0, 3.0);
@@ -111,7 +115,7 @@ mod tests {
     fn vec_dot() {
         let v1 = Tup(1.0, 2.0, 3.0);
         let v2 = Tup(2.0, 3.0, 4.0);
-        let a: f32 = v1.dot(v2);
+        let a: f64 = v1.dot(v2);
         assert_eq!(a, 20.0);
     }
 

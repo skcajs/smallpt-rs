@@ -10,7 +10,7 @@ pub enum RflType {
 
 #[derive(Debug, PartialEq)]
 pub struct Sphere {
-    pub r: f32,
+    pub r: f64,
     pub p: Tup,
     pub e: Tup,
     pub c: Tup,
@@ -18,12 +18,12 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    pub fn new(r: f32, p: Tup, e: Tup, c: Tup, rfl: RflType) -> Self {
+    pub fn new(r: f64, p: Tup, e: Tup, c: Tup, rfl: RflType) -> Self {
         Sphere { r, p, e, c, rfl }
     }
 
-    pub fn intersect(&self, ray: &Ray) -> f32 {
-        let eps: f32 = 1e-4;
+    pub fn intersect(&self, ray: &Ray) -> f64 {
+        let eps = 1e-4;
         let op = self.p - ray.o;
         let b = op.dot(ray.d);
         let det = b * b - op.dot(op) + self.r * self.r;
