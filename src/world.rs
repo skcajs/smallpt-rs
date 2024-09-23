@@ -194,6 +194,8 @@ impl World {
 
 #[cfg(test)]
 mod tests {
+    use rand::thread_rng;
+
     use super::*;
 
     #[test]
@@ -211,7 +213,7 @@ mod tests {
     }
 
     #[test]
-    fn ray_intersects_world() {
+    fn ray_intersects() {
         let world = World::new();
         let ray = Ray {
             o: Tup(0.0, 0.0, -5.0),
@@ -224,7 +226,7 @@ mod tests {
     }
 
     #[test]
-    fn ray_does_not_intersect_world() {
+    fn ray_does_not_intersect() {
         let world = World::new();
         let ray = Ray {
             o: Tup(0.0, 0.0, -200000.0),
@@ -234,5 +236,40 @@ mod tests {
         let mut id = 0;
         let its = world.intersect(&ray, &mut t, &mut id);
         assert!(!its);
+    }
+
+    #[test]
+    fn ray_intesects_empty_world() {
+        let ray = Ray {
+            o: Tup(0., 0., 0.),  // Origin
+            d: Tup(0., 0., -1.), // Direction pointing away from any spheres
+        };
+        let world = World { spheres: vec![] };
+        let mut rng = thread_rng();
+
+        let result = world.radiance(&ray, 0, &mut rng);
+        assert_eq!(result, Tup(0., 0., 0.));
+    }
+
+    #[test]
+    fn ray_intesects_single_sphere_world() {
+        let sphere = Sphere::new(
+            1.0,
+            Tup(0., 0., -5.),
+            Tup(1., 0., 0.),
+            Tup(0., 0., 0.),
+            RflType::DIFF,
+        );
+        let world = World {
+            spheres: vec![sphere],
+        };
+        let ray = Ray {
+            o: Tup(0., 0., 0.),  // Origin
+            d: Tup(0., 0., -1.), // Direction pointing away from any spheres
+        };
+        let mut rng = thread_rng();
+
+        let result = world.radiance(&ray, 0, &mut rng);
+        assert_eq!(result, Tup(1., 0., 0.));
     }
 }

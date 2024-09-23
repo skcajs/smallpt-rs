@@ -29,10 +29,10 @@ fn to_int(x: f64) -> i32 {
 fn main() {
     let w = 128;
     let h = 96;
-    let samps = 50;
+    let samps = 100;
     let cam = Ray {
         o: Tup(50., 52., 295.6),
-        d: Tup(0., -0.42612, 01.).norm(),
+        d: Tup(0., -0.42612, -1.).norm(),
     };
 
     let cx = Tup(w as f64 * 0.513 / h as f64, 0.0, 0.0);
@@ -67,7 +67,8 @@ fn main() {
                                 - 0.5)
                             + cy * (((sy.to_f64().unwrap() + 0.5 + dy) / 2. + y.to_f64().unwrap())
                                 / h.to_f64().unwrap()
-                                - 0.5);
+                                - 0.5)
+                            + cam.d;
                         rad = rad
                             + world.radiance(
                                 &Ray {
