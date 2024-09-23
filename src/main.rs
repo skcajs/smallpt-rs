@@ -27,9 +27,9 @@ fn to_int(x: f64) -> i32 {
 }
 
 fn main() {
-    let w = 64;
-    let h = 48;
-    let samps: isize = 10;
+    let w = 640;
+    let h = 480;
+    let samps: isize = 50;
     let cam = Ray {
         o: Tup(50., 52., 295.6),
         d: Tup(0., -0.042612, -1.).norm(),
@@ -67,24 +67,25 @@ fn main() {
                             + cy * (((sy as f64 + 0.5 + dy) / 2. + y as f64) / h as f64 - 0.5)
                             + cam.d;
 
+                        // rad = rad
+                        //     + world.radiance(
+                        //         &Ray {
+                        //             o: cam.o + d * 140.,
+                        //             d: d.norm(),
+                        //         },
+                        //         0,
+                        //         &mut rng,
+                        //     ) * (1. / samps as f64);
+
                         rad = rad
-                            + world.radiance(
-                                &Ray {
+                            + world.radiance_iter(
+                                Ray {
                                     o: cam.o + d * 140.,
                                     d: d.norm(),
                                 },
                                 0,
                                 &mut rng,
                             ) * (1. / samps as f64);
-
-                        // rad = rad
-                        //     + world.radiance_iter(
-                        //         Ray {
-                        //             o: cam.o + d * 140.,
-                        //             d: d.norm(),
-                        //         },
-                        //         &mut rng,
-                        //     ) * (1. / samps as f64);
                     }
 
                     c[i] = c[i] + Tup(clamp(rad.0), clamp(rad.1), clamp(rad.2)) * 0.25;

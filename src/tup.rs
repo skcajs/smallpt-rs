@@ -61,6 +61,12 @@ impl ops::Mul<f64> for Tup {
     }
 }
 
+// impl ops::AddAssign<Tup> for Tup {
+//     fn add_assign(&mut self, rhs: Tup) {
+//         *Self = Self(self.0 + rhs.0, self.1 + rhs.1, self.2 + rhs.2);
+//     }
+// }
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -189,34 +189,37 @@ impl World {
         }
     }
 
-    pub fn radiance_iter(&self, ray: Ray, mut rng: &mut ThreadRng) -> Tup {
-        let mut f_iter = Tup::zero();
-        let mut depth: i32 = 0;
-        let mut next_ray: Ray = ray;
+    pub fn radiance_iter(&self, mut ray: Ray, mut depth: i32, mut rng: &mut ThreadRng) -> Tup {
+        let mut result = Tup::zero();
+        let mut throughput = Tup::ones();
 
         loop {
             let mut t = f64::INFINITY;
             let mut id: usize = 0;
-            if !self.intersect(&next_ray, &mut t, &mut id) {
-                break;
+            if !self.intersect(&ray, &mut t, &mut id) {
+                return result;
             }
-            let obj: &Sphere = &self.spheres[id];
-            let x = next_ray.o + (next_ray.d * t);
-            let n = (x - obj.p).norm();
-            let n1 = if n.dot(next_ray.d) < 0.0 { n } else { n * -1.0 };
 
-            f_iter = f_iter + obj.e;
+            let obj: &Sphere = &self.spheres[id];
+            let x = ray.o + (ray.d * t);
+            let n = (x - obj.p).norm();
+            let n1 = if n.dot(ray.d) < 0.0 { n } else { n * -1.0 };
 
             let mut f = obj.c;
             let p = f.0.max(f.1.max(f.2));
             depth += 1;
+
             if depth > 5 {
                 if rng.gen::<f64>() < p {
                     f = f * (1.0 / p);
                 } else {
+                    result = result + throughput * obj.e;
                     break;
                 }
             }
+
+            result = result + throughput * obj.e;
+            throughput = throughput * f;
 
             match obj.rfl {
                 RflType::DIFF => {
@@ -229,63 +232,85 @@ impl World {
                     } else {
                         Tup(1., 0., 0.).cross(w).norm()
                     };
-
                     let v = w.cross(u);
                     let d: Tup =
                         (u * f64::cos(r1) * r2s + v * f64::sin(r1) * r2s + w * ((1. - r2).sqrt()))
                             .norm();
-                    next_ray = Ray { o: x, d };
+
+                    ray = Ray { o: x, d };
                 }
                 RflType::SPEC => {
-                    next_ray = Ray {
+                    ray = Ray {
                         o: x,
-                        d: next_ray.d - n * 2. * n.dot(next_ray.d),
+                        d: ray.d - n * 2. * n.dot(ray.d),
                     };
                 }
                 RflType::REFR => {
-                    let rfl_ray = Ray {
-                        o: x,
-                        d: next_ray.d - n * 2. * n.dot(next_ray.d),
-                    };
                     let into = n.dot(n1) > 0.;
                     let nc: f64 = 1.;
                     let nt: f64 = 1.5;
                     let nnt = if into { nc / nt } else { nt / nc };
-                    let ddn = next_ray.d.dot(n1);
+                    let ddn = ray.d.dot(n1);
                     let cos2t = 1. - nnt * nnt * (1. - ddn * ddn);
+
                     if cos2t < 0. {
-                        next_ray = rfl_ray;
+                        ray = Ray {
+                            o: x,
+                            d: ray.d - n * 2. * n.dot(ray.d),
+                        };
                         continue;
                     }
-                    let tdir = (next_ray.d * nnt
+
+                    let tdir = (ray.d * nnt
                         - n * if into { 1. } else { -1. } * (ddn * nnt + cos2t.sqrt()))
                     .norm();
+
                     let a = nt - nc;
                     let b = nt + nc;
-                    let r0 = a * a / (b * b);
+                    let r0 = (a * a) / (b * b);
                     let c = 1. - if into { -ddn } else { tdir.dot(n) };
                     let re = r0 + (1. - r0) * c * c * c * c * c;
                     let tr = 1. - re;
-                    let p: f64 = 0.25 + 0.5 * re;
+                    let p = 0.25 + 0.5 * re;
                     let rp = re / p;
                     let tp = tr / (1. - p);
 
-                    f_iter = f_iter
-                        + f * (if depth > 2 {
-                            if rng.gen_range(0.0..1.0) < p {
-                                self.radiance(&rfl_ray, depth, &mut rng) * rp
-                            } else {
-                                self.radiance(&Ray { o: x, d: tdir }, depth, &mut rng) * tp
-                            }
+                    if depth > 2 {
+                        if rng.gen_range(0.0..1.0) < p {
+                            ray = Ray {
+                                o: x,
+                                d: ray.d - n * 2. * n.dot(ray.d),
+                            };
+                            throughput = throughput * rp;
                         } else {
-                            self.radiance(&rfl_ray, depth, &mut rng) * re
-                                + self.radiance(&Ray { o: x, d: tdir }, depth, &mut rng) * tr
-                        });
+                            ray = Ray { o: x, d: tdir };
+                            throughput = throughput * tp;
+                        }
+                    } else {
+                        let reflected_dir = ray.d - n * 2. * n.dot(ray.d);
+                        let reflected_part = throughput * re;
+                        let refracted_part = throughput * tr;
+
+                        result = result
+                            + reflected_part
+                                * self.radiance(
+                                    &Ray {
+                                        o: x,
+                                        d: reflected_dir,
+                                    },
+                                    depth,
+                                    &mut rng,
+                                );
+                        result = result
+                            + refracted_part
+                                * self.radiance(&Ray { o: x, d: tdir }, depth, &mut rng);
+                        break;
+                    }
                 }
             }
         }
 
-        f_iter
+        result
     }
 }
 
