@@ -5,8 +5,9 @@ mod tup;
 mod world;
 
 use std::fs::File;
-use std::io;
 use std::io::Write;
+use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::Ordering;
 use std::time::Instant;
 
 use integrator::integrate;
@@ -42,22 +43,25 @@ fn main() {
 
     let cx = Tup(w as f64 * 0.5135 / h as f64, 0.0, 0.0);
     let cy = (cx.cross(cam.d)).norm() * 0.5135;
-    let mut c: Vec<Tup> = vec![Tup(0.0, 0.0, 0.0); (w * h) as usize];
+    let mut data: Vec<(usize, usize, Tup)> = vec![];
+    for i in (0..h).rev() {
+        for j in 0..w {
+            data.push((i, j, Tup(0.,0.,0.)));
+        }
+    }
 
     let world = World::new();
     
     let now = Instant::now();
-    let mut rng = thread_rng();
-    
-    (0..h).into_iter().for_each(|y| {
-        print!(
-            "\rRendering {0} spp {1:.2}%",
-            num_samples,
-            100. * y as f64 / (h as f64 - 1.)
-        );
-        io::stdout().flush().unwrap();
-        (0..w).into_iter().for_each(|x: usize| {
-            let i = (h - y - 1) * w + x;
+
+    let progress_counter = AtomicUsize::new(0);
+    let total_pixels = h * w;
+
+    data.par_chunks_mut(100).for_each(|slice| {
+        let mut rng = thread_rng();
+        slice.into_iter().for_each(|p| {
+            let y = p.0;
+            let x = p.1;
             for sy in 0..2 {
                 for sx in 0..2 {
                     let mut rad = Tup(0., 0., 0.);
@@ -92,10 +96,17 @@ fn main() {
                         ) * (1. / num_samples as f64)
                     });
 
-                    c[i] = c[i] + Tup(clamp(rad.0), clamp(rad.1), clamp(rad.2)) * 0.25;
+                    p.2 = p.2 + Tup(clamp(rad.0), clamp(rad.1), clamp(rad.2)) * 0.25;
                 }
             }
         });
+
+        // Increment progress
+        let prev_count = progress_counter.fetch_add(1, Ordering::SeqCst);
+
+        // Print progress
+        let progress = 10000. * prev_count as f64 / (total_pixels as f64);
+        print!("\rRendering {0} spp {1:.2}%", num_samples, progress);
     });
 
     let elapsed_time = now.elapsed();
@@ -110,9 +121,9 @@ fn main() {
         writeln!(
             f,
             "{} {} {}",
-            to_int(c[i].0),
-            to_int(c[i].1),
-            to_int(c[i].2)
+            to_int(data[i].2.0),
+            to_int(data[i].2.1),
+            to_int(data[i].2.2)
         )
         .unwrap();
     }
