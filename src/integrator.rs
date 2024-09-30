@@ -109,7 +109,7 @@ pub fn radiance(world: &World, ray: &Ray, mut depth: i32, mut rng: &mut ThreadRn
 
             obj.e
                 + f * (if depth > 2 {
-                    if rng.gen_range(0.0..1.0) < p {
+                    if rng.gen::<f64>() < p {
                         radiance(world, &rfl_ray, depth, &mut rng) * rp
                     } else {
                         radiance(world, &Ray { o: x, d: tdir }, depth, &mut rng) * tp
@@ -122,7 +122,7 @@ pub fn radiance(world: &World, ray: &Ray, mut depth: i32, mut rng: &mut ThreadRn
     }
 }
 
-pub fn radiance_iter(world: &World, mut ray: Ray, mut depth: i32, mut rng: &mut ThreadRng) -> Tup {
+pub fn radiance_iter(world: &World, mut ray: Ray, mut depth: i32, rng: &mut ThreadRng) -> Tup {
     let mut result = Tup::zeros();
     let mut throughput = Tup::ones();
 
@@ -208,36 +208,47 @@ pub fn radiance_iter(world: &World, mut ray: Ray, mut depth: i32, mut rng: &mut 
                 let rp = re / p;
                 let tp = tr / (1. - p);
 
-                if depth > 2 {
-                    if rng.gen_range(0.0..1.0) < p {
-                        ray = Ray {
-                            o: x,
-                            d: ray.d - n * 2. * n.dot(ray.d),
-                        };
-                        throughput = throughput * rp;
-                    } else {
-                        ray = Ray { o: x, d: tdir };
-                        throughput = throughput * tp;
-                    }
+                if rng.gen::<f64>() < p {
+                    ray = Ray {
+                        o: x,
+                        d: ray.d - n * 2. * n.dot(ray.d),
+                    };
+                    throughput = throughput * rp;
                 } else {
-                    let reflected_dir = ray.d - n * 2. * n.dot(ray.d);
-                    let reflected_part = throughput * re;
-                    let refracted_part = throughput * tr;
-
-                    result += reflected_part
-                        * radiance(
-                            world,
-                            &Ray {
-                                o: x,
-                                d: reflected_dir,
-                            },
-                            depth,
-                            &mut rng,
-                        );
-                    result +=
-                        refracted_part * radiance(world, &Ray { o: x, d: tdir }, depth, &mut rng);
-                    break;
+                    ray = Ray { o: x, d: tdir };
+                    throughput = throughput * tp;
                 }
+
+                // if depth > 2 {
+                //     if rng.gen::<f64>() < p {
+                //         ray = Ray {
+                //             o: x,
+                //             d: ray.d - n * 2. * n.dot(ray.d),
+                //         };
+                //         throughput = throughput * rp;
+                //     } else {
+                //         ray = Ray { o: x, d: tdir };
+                //         throughput = throughput * tp;
+                //     }
+                // } else {
+                //     let reflected_dir = ray.d - n * 2. * n.dot(ray.d);
+                //     let reflected_part = throughput * re;
+                //     let refracted_part = throughput * tr;
+
+                //     result += reflected_part
+                //         * radiance(
+                //             world,
+                //             &Ray {
+                //                 o: x,
+                //                 d: reflected_dir,
+                //             },
+                //             depth,
+                //             &mut rng,
+                //         );
+                //     result +=
+                //         refracted_part * radiance(world, &Ray { o: x, d: tdir }, depth, &mut rng);
+                //     break;
+                // }
             }
         }
     }

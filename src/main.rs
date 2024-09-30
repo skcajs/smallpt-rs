@@ -32,9 +32,9 @@ fn to_int(x: f64) -> i32 {
 }
 
 fn main() {
-    let w = 1024;
-    let h = 768;
-    let num_samples: isize = 80 / 4;
+    let w = 512;
+    let h = 384;
+    let num_samples: isize = 25;
     let cam = Ray {
         o: Tup(50., 52., 295.6),
         d: Tup(0., -0.042612, -1.).norm(),
@@ -52,7 +52,7 @@ fn main() {
     (0..h).into_iter().for_each(|y| {
         print!(
             "\rRendering {0} spp {1:.2}%",
-            num_samples * 4,
+            num_samples,
             100. * y as f64 / (h as f64 - 1.)
         );
         io::stdout().flush().unwrap();
@@ -61,7 +61,7 @@ fn main() {
             for sy in 0..2 {
                 for sx in 0..2 {
                     let mut rad = Tup(0., 0., 0.);
-                    for _ in 0..num_samples {
+                    rad = (0..num_samples).into_iter().fold(rad,|acc, _| {
                         let r1: f64 = 2. * rng.gen::<f64>();
                         let dx = if r1 < 1. {
                             r1.sqrt() - 1.
@@ -80,7 +80,7 @@ fn main() {
                             + cy * (((sy as f64 + 0.5 + dy) / 2. + y as f64) / h as f64 - 0.5)
                             + cam.d;
 
-                        rad += integrate(
+                        acc + integrate(
                             &world,
                             Ray {
                                 o: cam.o + d * 140.,
@@ -89,8 +89,8 @@ fn main() {
                             0,
                             &mut rng,
                             IntegrationType::default(),
-                        ) * (1. / num_samples as f64);
-                    }
+                        ) * (1. / num_samples as f64)
+                    });
 
                     c[i] = c[i] + Tup(clamp(rad.0), clamp(rad.1), clamp(rad.2)) * 0.25;
                 }
