@@ -1,4 +1,5 @@
 use std::f64::consts::PI;
+use recursive::recursive;
 
 use rand::{rngs::ThreadRng, Rng};
 
@@ -30,6 +31,7 @@ pub fn integrate(
     }
 }
 
+#[recursive]
 pub fn radiance(world: &World, ray: &Ray, mut depth: i32, mut rng: &mut ThreadRng) -> Tup {
     let mut t = f64::INFINITY;
     let mut id: usize = 0;

@@ -12,7 +12,7 @@ use std::time::Instant;
 use integrator::integrate;
 use integrator::IntegrationType;
 use rand::{thread_rng, Rng};
-// use rayon::prelude::*;
+use rayon::prelude::*;
 
 use ray::Ray;
 use tup::Tup;
@@ -32,9 +32,9 @@ fn to_int(x: f64) -> i32 {
 }
 
 fn main() {
-    let w = 512;
-    let h = 384;
-    let num_samples: isize = 25;
+    let w = 1024;
+    let h = 768;
+    let num_samples: isize = 50; // will be evaluated to num_samples * 4
     let cam = Ray {
         o: Tup(50., 52., 295.6),
         d: Tup(0., -0.042612, -1.).norm(),
@@ -45,10 +45,10 @@ fn main() {
     let mut c = vec![Tup(0.0, 0.0, 0.0); (w * h) as usize];
 
     let world = World::new();
-    let mut rng = thread_rng();
-
+    
     let now = Instant::now();
-
+    let mut rng = thread_rng();
+    
     (0..h).into_iter().for_each(|y| {
         print!(
             "\rRendering {0} spp {1:.2}%",
@@ -88,7 +88,7 @@ fn main() {
                             },
                             0,
                             &mut rng,
-                            IntegrationType::default(),
+                            IntegrationType::Recursive,
                         ) * (1. / num_samples as f64)
                     });
 
