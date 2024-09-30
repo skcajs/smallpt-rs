@@ -245,10 +245,10 @@ pub fn radiance_iter(world: &World, mut ray: Ray, mut depth: i32, rng: &mut Thre
                 //                 d: reflected_dir,
                 //             },
                 //             depth,
-                //             &mut rng,
+                //             rng,
                 //         );
                 //     result +=
-                //         refracted_part * radiance(world, &Ray { o: x, d: tdir }, depth, &mut rng);
+                //         refracted_part * radiance(world, &Ray { o: x, d: tdir }, depth, rng);
                 //     break;
                 // }
             }

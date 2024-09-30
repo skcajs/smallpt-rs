@@ -34,7 +34,7 @@ fn to_int(x: f64) -> i32 {
 fn main() {
     let w = 1024;
     let h = 768;
-    let num_samples: isize = 50; // will be evaluated to num_samples * 4
+    let num_samples: isize = 1250; // will be evaluated to num_samples * 4
     let cam = Ray {
         o: Tup(50., 52., 295.6),
         d: Tup(0., -0.042612, -1.).norm(),
@@ -42,7 +42,7 @@ fn main() {
 
     let cx = Tup(w as f64 * 0.5135 / h as f64, 0.0, 0.0);
     let cy = (cx.cross(cam.d)).norm() * 0.5135;
-    let mut c = vec![Tup(0.0, 0.0, 0.0); (w * h) as usize];
+    let mut c: Vec<Tup> = vec![Tup(0.0, 0.0, 0.0); (w * h) as usize];
 
     let world = World::new();
     
@@ -56,7 +56,7 @@ fn main() {
             100. * y as f64 / (h as f64 - 1.)
         );
         io::stdout().flush().unwrap();
-        (0..w).into_iter().for_each(|x| {
+        (0..w).into_iter().for_each(|x: usize| {
             let i = (h - y - 1) * w + x;
             for sy in 0..2 {
                 for sx in 0..2 {
@@ -88,7 +88,7 @@ fn main() {
                             },
                             0,
                             &mut rng,
-                            IntegrationType::Recursive,
+                            IntegrationType::default(),
                         ) * (1. / num_samples as f64)
                     });
 
