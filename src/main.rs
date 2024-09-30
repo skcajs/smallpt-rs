@@ -1,11 +1,15 @@
+mod integrator;
 mod ray;
 mod sphere;
 mod tup;
 mod world;
 
 use std::fs::File;
+use std::io;
 use std::io::Write;
 
+use integrator::integrate;
+use integrator::IntegrationType;
 use rand::{thread_rng, Rng};
 // use rayon::prelude::*;
 
@@ -27,9 +31,9 @@ fn to_int(x: f64) -> i32 {
 }
 
 fn main() {
-    let w = 640;
-    let h = 480;
-    let samps: isize = 50;
+    let w = 1024;
+    let h = 768;
+    let num_samples: isize = 100 / 4;
     let cam = Ray {
         o: Tup(50., 52., 295.6),
         d: Tup(0., -0.042612, -1.).norm(),
@@ -43,12 +47,18 @@ fn main() {
     let mut rng = thread_rng();
 
     (0..h).into_iter().for_each(|y| {
+        print!(
+            "\rRendering {0} spp {1:.2}",
+            num_samples * 4,
+            100. * y as f64 / (h as f64 - 1.)
+        );
+        io::stdout().flush().unwrap();
         (0..w).into_iter().for_each(|x| {
             let i = (h - y - 1) * w + x;
             for sy in 0..2 {
                 for sx in 0..2 {
                     let mut rad = Tup(0., 0., 0.);
-                    for _ in 0..samps {
+                    for _ in 0..num_samples {
                         let r1: f64 = 2. * rng.gen::<f64>();
                         let dx = if r1 < 1. {
                             r1.sqrt() - 1.
@@ -67,24 +77,16 @@ fn main() {
                             + cy * (((sy as f64 + 0.5 + dy) / 2. + y as f64) / h as f64 - 0.5)
                             + cam.d;
 
-                        // rad = rad
-                        //     + world.radiance(
-                        //         &Ray {
-                        //             o: cam.o + d * 140.,
-                        //             d: d.norm(),
-                        //         },
-                        //         0,
-                        //         &mut rng,
-                        //     ) * (1. / samps as f64);
-
-                        rad += world.radiance_iter(
+                        rad += integrate(
+                            &world,
                             Ray {
                                 o: cam.o + d * 140.,
                                 d: d.norm(),
                             },
                             0,
                             &mut rng,
-                        ) * (1. / samps as f64);
+                            IntegrationType::default(),
+                        ) * (1. / num_samples as f64);
                     }
 
                     c[i] = c[i] + Tup(clamp(rad.0), clamp(rad.1), clamp(rad.2)) * 0.25;
