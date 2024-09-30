@@ -7,6 +7,7 @@ mod world;
 use std::fs::File;
 use std::io;
 use std::io::Write;
+use std::time::Instant;
 
 use integrator::integrate;
 use integrator::IntegrationType;
@@ -33,7 +34,7 @@ fn to_int(x: f64) -> i32 {
 fn main() {
     let w = 1024;
     let h = 768;
-    let num_samples: isize = 100 / 4;
+    let num_samples: isize = 80 / 4;
     let cam = Ray {
         o: Tup(50., 52., 295.6),
         d: Tup(0., -0.042612, -1.).norm(),
@@ -46,9 +47,11 @@ fn main() {
     let world = World::new();
     let mut rng = thread_rng();
 
+    let now = Instant::now();
+
     (0..h).into_iter().for_each(|y| {
         print!(
-            "\rRendering {0} spp {1:.2}",
+            "\rRendering {0} spp {1:.2}%",
             num_samples * 4,
             100. * y as f64 / (h as f64 - 1.)
         );
@@ -94,6 +97,12 @@ fn main() {
             }
         });
     });
+
+    let elapsed_time = now.elapsed();
+    println!(
+        "\nRunning integrator took {} seconds.",
+        elapsed_time.as_secs(),
+    );
 
     let mut f = File::create("image.ppm").unwrap();
     writeln!(f, "P3\n{} {}\n255", w, h).unwrap();
