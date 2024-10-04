@@ -3,6 +3,8 @@ mod ray;
 mod sphere;
 mod tup;
 mod world;
+mod sampler;
+mod filter;
 
 use std::fs::File;
 use std::io::Write;
@@ -12,12 +14,13 @@ use std::time::Instant;
 
 use integrator::integrate;
 use integrator::IntegrationType;
-use rand::{thread_rng, Rng};
 use rayon::prelude::*;
 
 use ray::Ray;
 use tup::Tup;
 use world::World;
+use sampler::Sampler;
+use filter::tent_filter;
 
 fn clamp(x: f64) -> f64 {
     if x < 0. {
@@ -33,9 +36,9 @@ fn to_int(x: f64) -> i32 {
 }
 
 fn main() {
-    let w = 1024;
-    let h = 768;
-    let num_samples: isize = 1250; // will be evaluated to num_samples * 4
+    let w = 640;
+    let h = 480;
+    let num_samples: isize = 50; // will be evaluated to num_samples * 4
     let cam = Ray {
         o: Tup(50., 52., 295.6),
         d: Tup(0., -0.046, -1.).norm(),
@@ -58,7 +61,7 @@ fn main() {
     let total_pixels = h * w;
 
     data.par_chunks_mut(100).for_each(|slice| {
-        let mut rng = thread_rng();
+        let mut sampler = Sampler::new();
         slice.into_iter().for_each(|p| {
             let y = p.0;
             let x = p.1;
@@ -66,19 +69,7 @@ fn main() {
                 for sx in 0..2 {
                     let mut rad = Tup(0., 0., 0.);
                     rad = (0..num_samples).into_iter().fold(rad,|acc, _| {
-                        let r1: f64 = 2. * rng.gen::<f64>();
-                        let dx = if r1 < 1. {
-                            r1.sqrt() - 1.
-                        } else {
-                            1. - (2. - r1).sqrt()
-                        };
-
-                        let r2: f64 = 2. * rng.gen::<f64>();
-                        let dy = if r2 < 1. {
-                            r2.sqrt() - 1.
-                        } else {
-                            1. - (2. - r2).sqrt()
-                        };
+                        let (dx, dy) = tent_filter(&mut sampler);
 
                         let d = cx * (((sx as f64 + 0.5 + dx) / 2. + x as f64) / w as f64 - 0.5)
                             + cy * (((sy as f64 + 0.5 + dy) / 2. + y as f64) / h as f64 - 0.5)
@@ -91,7 +82,7 @@ fn main() {
                                 d: d.norm(),
                             },
                             0,
-                            &mut rng,
+                            &mut sampler,
                             IntegrationType::default(),
                         ) * (1. / num_samples as f64)
                     });
