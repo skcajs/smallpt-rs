@@ -5,7 +5,7 @@ use rand::{rngs::ThreadRng, Rng};
 
 use crate::{
     ray::Ray,
-    sphere::{RflType, Sphere},
+    shapes::sphere::{RflType, Sphere},
     tup::Tup,
     world::World,
 };

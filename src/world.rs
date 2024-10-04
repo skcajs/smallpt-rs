@@ -1,8 +1,9 @@
 use core::f64;
 
 use super::ray::Ray;
-use super::sphere::{RflType, Sphere};
 use super::tup::Tup;
+
+use crate::shapes::sphere::{RflType, Sphere};
 
 pub struct World {
     pub spheres: Vec<Sphere>,
