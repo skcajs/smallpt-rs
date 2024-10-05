@@ -258,9 +258,6 @@ pub fn radiance_iter(world: &World, mut ray: Ray, mut depth: i32, sampler: &mut 
 
 #[cfg(test)]
 mod tests {
-
-    use rand::thread_rng;
-
     use super::*;
     #[test]
     fn ray_intesects_empty_world() {
