@@ -107,10 +107,10 @@ impl World {
             fiddle = 1.;
             // Check for intersections with each sphere
             for i in (0..self.spheres.len()).rev() {
-                let d = self.spheres[i].intersect(&Ray { o: current_point, d: ray.d });
+                let d = self.spheres[i].intersect(&Ray { o: current_point, d: ray.d }); // This would need to be stored (and possibly returned), ray.d needs to also be the new direction in curved coords 
                 if d != 0.0 && d < step_size {
                     if d < sigma {
-                        *t = self.spheres[i].intersect(ray); // this needs to be *t = current_distance, but it's too slow. This won't worked in curved coords
+                        *t = self.spheres[i].intersect(ray); //  This won't work in curved coords, needs to be *t = current_distance, but it's too slow.
                         *id = i;
                         return true; // Intersection found
                     } else {

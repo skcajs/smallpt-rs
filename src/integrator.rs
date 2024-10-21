@@ -34,11 +34,11 @@ pub fn integrate(
 pub fn radiance(world: &World, ray: &Ray, mut depth: i32, mut sampler: &mut Sampler) -> Tup {
     let mut t = f64::INFINITY;
     let mut id: usize = 0;
-    if !world.intersect(&ray, &mut t, &mut id) {
+    if !world.trace_geodesic(&ray, &mut t, &mut id) {
         return Tup(0., 0., 0.);
     }
     let obj: &Sphere = &world.spheres[id];
-    let x = ray.o + (ray.d * t);
+    let x = ray.o + (ray.d * t); // I think this should be the current point from the trace_geodesic.
     let n = (x - obj.p).norm();
     let n1 = if n.dot(ray.d) < 0.0 { n } else { n * -1.0 };
 
