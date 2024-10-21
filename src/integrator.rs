@@ -130,7 +130,7 @@ pub fn radiance_iter(world: &World, mut ray: Ray, mut depth: i32, sampler: &mut 
     loop {
         let mut t = f64::INFINITY;
         let mut id: usize = 0;
-        if !world.intersect(&ray, &mut t, &mut id) {
+        if !world.trace_geodesic(&ray, &mut t, &mut id) {
             return result;
         }
 
