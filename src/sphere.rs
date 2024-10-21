@@ -46,6 +46,10 @@ impl Sphere {
 
         0.0
     }
+
+    pub fn normal_at(&self, h: Tup) -> Tup {
+        (h-self.p).norm()
+    }
 }
 
 #[cfg(test)]

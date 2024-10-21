@@ -91,6 +91,27 @@ impl World {
         }
         *t < f64::INFINITY
     }
+
+    pub fn intersect_geodesic(&self, ray: &Ray, t: &mut f64, id: &mut usize) -> bool {
+        let max_iter = 100;
+        let dt = 10.0;
+        let t = 0.0;
+        for i in 0..max_iter {
+            let next_ray = self.trace_step(ray, dt);
+            for i in (0..self.spheres.len()).rev() {
+                
+            }
+        }
+        true
+    }
+
+    fn trace_step(&self, ray: &Ray, dt: f64) -> Ray {
+        let o = ray.o + Tup(dt,dt,dt);
+        Ray {
+            o,
+            d: o - ray.o
+        }
+    }
 }
 
 #[cfg(test)]
