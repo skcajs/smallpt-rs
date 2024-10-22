@@ -5,6 +5,7 @@ mod tup;
 mod world;
 mod sampler;
 mod filter;
+mod interval;
 
 use std::fs::File;
 use std::io::Write;

@@ -3,6 +3,7 @@ use core::f64;
 use super::ray::Ray;
 use super::sphere::{RflType, Sphere};
 use super::tup::Tup;
+use super::interval::minkowski;
 
 pub struct World {
     pub spheres: Vec<Sphere>,
@@ -92,25 +93,24 @@ impl World {
         *t < f64::INFINITY
     }
 
-    pub fn trace_geodesic(&self, ray: &Ray, t: &mut f64, id: &mut usize) -> bool {
+    pub fn trace_geodesic(&self, ray: &mut Ray, t: &mut f64, id: &mut usize) -> bool {
         *t = f64::INFINITY;
         let max_distance: f64 = 200.0; 
-        let mut step_size: f64 = 10.;
+        let mut step_size: f64 = 20.;
         let mut current_distance = 0.0;
-        let sigma = 0.01;
+        let sigma = 0.1;
 
         let mut fiddle: f64;
-    
+
         while current_distance < max_distance {
             // Compute the current point along the ray
-            let current_point = ray.o + ray.d * current_distance;
             fiddle = 1.;
             // Check for intersections with each sphere
             for i in (0..self.spheres.len()).rev() {
-                let d = self.spheres[i].intersect(&Ray { o: current_point, d: ray.d }); // This would need to be stored (and possibly returned), ray.d needs to also be the new direction in curved coords 
+                let d = self.spheres[i].intersect(&ray);
                 if d != 0.0 && d < step_size {
                     if d < sigma {
-                        *t = self.spheres[i].intersect(ray); //  This won't work in curved coords, needs to be *t = current_distance, but it's too slow.
+                        *t = d;
                         *id = i;
                         return true; // Intersection found
                     } else {
@@ -120,7 +120,7 @@ impl World {
                 }
             }
     
-            // Increment the current distance by the step size
+            *ray = minkowski(&ray, ray.o + ray.d * step_size * fiddle);
             current_distance += step_size * fiddle;
         }
     
