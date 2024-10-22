@@ -1,8 +1,5 @@
 use super::tup::Tup;
 use super::ray::Ray;
-use rand::prelude::*;
-
-
 
 pub fn minkowski(ray: &Ray, previous_point: Tup, time_step: f64) -> Ray {
     let current_point = previous_point + ray.d * time_step;
