@@ -3,7 +3,7 @@ use core::f64;
 use super::ray::Ray;
 use super::sphere::{RflType, Sphere};
 use super::tup::Tup;
-use super::interval::minkowski;
+use super::interval::{minkowski};
 
 pub struct World {
     pub spheres: Vec<Sphere>,
@@ -100,12 +100,11 @@ impl World {
         let mut current_distance = 0.0;
         let sigma = 0.1;
 
-        let mut fiddle: f64;
+        let mut next;
 
         while current_distance < max_distance {
-            // Compute the current point along the ray
-            fiddle = 1.;
-            // Check for intersections with each sphere
+            next = true;
+            let previous_point = ray.o;
             for i in (0..self.spheres.len()).rev() {
                 let d = self.spheres[i].intersect(&ray);
                 if d != 0.0 && d < step_size {
@@ -114,14 +113,16 @@ impl World {
                         *id = i;
                         return true; // Intersection found
                     } else {
-                        fiddle = 0.;
+                        next = false;
                         step_size /= 2.;
                     }
                 }
             }
     
-            *ray = minkowski(&ray, ray.o + ray.d * step_size * fiddle);
-            current_distance += step_size * fiddle;
+            if next {
+                *ray = minkowski(ray, previous_point, step_size );
+                current_distance += step_size;
+            }
         }
     
         *t = f64::INFINITY;
