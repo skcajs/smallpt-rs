@@ -3,7 +3,7 @@ use core::f64;
 use super::ray::Ray;
 use super::sphere::{RflType, Sphere};
 use super::tup::Tup;
-use super::interval::{minkowski};
+use super::interval::{minkowski, schwartzchild};
 
 pub struct World {
     pub spheres: Vec<Sphere>,
@@ -16,7 +16,7 @@ impl World {
                 // Scene: radius, position, emission, color, material
                 Sphere::new(
                     1e5,
-                    Tup(1e5 + 1.0, 40.8, 81.6),
+                    Tup(1e5 + 1., 40.8, 81.6),
                     Tup::zeros(),
                     Tup(0.75, 0.25, 0.25),
                     RflType::DIFF,
@@ -63,13 +63,20 @@ impl World {
                     Tup(1., 1., 1.) * 0.999,
                     RflType::SPEC,
                 ), // Mirror
+                // Sphere::new(
+                //     16.5,
+                //     Tup(73., 16.5, 78.),
+                //     Tup::zeros(),
+                //     Tup(1., 1., 1.) * 0.999,
+                //     RflType::REFR,
+                // ), // Glass
                 Sphere::new(
                     16.5,
-                    Tup(73., 16.5, 78.),
+                    Tup(73., 40.8, 81.6),
                     Tup::zeros(),
                     Tup(1., 1., 1.) * 0.999,
                     RflType::REFR,
-                ), // Glass
+                ), // BH
                 Sphere::new(
                     600.,
                     Tup(50., 681.6 - 0.27, 81.6),
@@ -96,15 +103,14 @@ impl World {
     pub fn trace_geodesic(&self, ray: &mut Ray, t: &mut f64, id: &mut usize) -> bool {
         *t = f64::INFINITY;
         let max_distance: f64 = 200.0; 
-        let mut step_size: f64 = 20.;
+        let mut step_size: f64 = 5.;
         let mut current_distance = 0.0;
-        let sigma = 0.1;
+        let sigma = 0.01;
 
         let mut next;
 
         while current_distance < max_distance {
             next = true;
-            let previous_point = ray.o;
             for i in (0..self.spheres.len()).rev() {
                 let d = self.spheres[i].intersect(&ray);
                 if d != 0.0 && d < step_size {
@@ -120,7 +126,7 @@ impl World {
             }
     
             if next {
-                *ray = minkowski(ray, previous_point, step_size );
+                *ray = schwartzchild(ray, step_size);
                 current_distance += step_size;
             }
         }
