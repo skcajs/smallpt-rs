@@ -1,12 +1,12 @@
-use std::f64::consts::PI;
 use recursive::recursive;
+use std::f64::consts::PI;
 
 use crate::{
     ray::Ray,
+    sampler::Sampler,
     sphere::{RflType, Sphere},
     tup::Tup,
     world::World,
-    sampler::Sampler
 };
 
 #[derive(Default)]

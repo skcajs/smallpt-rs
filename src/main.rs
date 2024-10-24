@@ -1,11 +1,11 @@
+mod filter;
 mod integrator;
+mod interval;
 mod ray;
+mod sampler;
 mod sphere;
 mod tup;
 mod world;
-mod sampler;
-mod filter;
-mod interval;
 
 use std::fs::File;
 use std::io::Write;
@@ -17,11 +17,11 @@ use integrator::integrate;
 use integrator::IntegrationType;
 use rayon::prelude::*;
 
+use filter::tent_filter;
 use ray::Ray;
+use sampler::Sampler;
 use tup::Tup;
 use world::World;
-use sampler::Sampler;
-use filter::tent_filter;
 
 fn clamp(x: f64) -> f64 {
     if x < 0. {
@@ -41,7 +41,7 @@ fn main() {
     let h = 480;
     let num_samples: isize = 50; // will be evaluated to num_samples * 4
     let cam = Ray {
-        o: Tup(50., 52., 295.6),
+        o: Tup(50. - 50., 52. - 52., 295.6),
         d: Tup(0., -0.046, -1.).norm(),
     };
 
@@ -50,12 +50,12 @@ fn main() {
     let mut data: Vec<(usize, usize, Tup)> = vec![];
     for i in (0..h).rev() {
         for j in 0..w {
-            data.push((i, j, Tup(0.,0.,0.)));
+            data.push((i, j, Tup(0., 0., 0.)));
         }
     }
 
     let world = World::new();
-    
+
     let now = Instant::now();
 
     let progress_counter = AtomicUsize::new(0);
@@ -69,7 +69,7 @@ fn main() {
             for sy in 0..2 {
                 for sx in 0..2 {
                     let mut rad = Tup(0., 0., 0.);
-                    rad = (0..num_samples).into_iter().fold(rad,|acc, _| {
+                    rad = (0..num_samples).into_iter().fold(rad, |acc, _| {
                         let (dx, dy) = tent_filter(&mut sampler);
 
                         let d = cx * (((sx as f64 + 0.5 + dx) / 2. + x as f64) / w as f64 - 0.5)
@@ -113,9 +113,9 @@ fn main() {
         writeln!(
             f,
             "{} {} {}",
-            to_int(data[i].2.0),
-            to_int(data[i].2.1),
-            to_int(data[i].2.2)
+            to_int(data[i].2 .0),
+            to_int(data[i].2 .1),
+            to_int(data[i].2 .2)
         )
         .unwrap();
     }
