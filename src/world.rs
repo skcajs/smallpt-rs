@@ -3,7 +3,7 @@ use core::f64;
 use super::ray::Ray;
 use super::sphere::{RflType, Sphere};
 use super::tup::Tup;
-use super::interval::{minkowski, schwartzchild};
+use super::interval::{minkowski, schwarszchild};
 
 pub struct World {
     pub spheres: Vec<Sphere>,
@@ -103,9 +103,9 @@ impl World {
     pub fn trace_geodesic(&self, ray: &mut Ray, t: &mut f64, id: &mut usize) -> bool {
         *t = f64::INFINITY;
         let max_distance: f64 = 200.0; 
-        let mut step_size: f64 = 5.;
+        let mut step_size: f64 = 10.;
         let mut current_distance = 0.0;
-        let sigma = 0.01;
+        let sigma = 0.1;
 
         let mut next;
 
@@ -126,7 +126,7 @@ impl World {
             }
     
             if next {
-                *ray = schwartzchild(ray, step_size);
+                *ray = schwarszchild(ray, step_size);
                 current_distance += step_size;
             }
         }
